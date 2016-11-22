@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -45,6 +46,8 @@ import butterknife.OnClick;
 public class PlayFragment extends Fragment {
 
     private static final String TAG = PlayFragment.class.toString();
+    @BindView(R.id.ll_background)
+    LinearLayout llBackground;
     @BindView(R.id.tv_current_score_play)
     TextView tvCurrentScorePlay;
     @BindView(R.id.pb_time)
@@ -120,18 +123,18 @@ public class PlayFragment extends Fragment {
     }
 
     private void beginPlay() {
-        currentTime = pbTime.getMax();
+        currentTime = 0;
         pbTime.setProgress(currentTime);
         countDownTimer = new CountDownTimer(currentMilis, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 Log.d(TAG, String.format("current: %s", currentMilis));
                 currentMilis = millisUntilFinished;
-                currentTime -= (pbTime.getMax() / 20);
-                if (currentTime > 0) {
+                currentTime += (pbTime.getMax() / 20);
+                if (currentTime < pbTime.getMax()) {
                     pbTime.setProgress(currentTime);
                 } else {
-                    pbTime.setProgress(0);
+                    pbTime.setProgress(pbTime.getMax());
                 }
             }
 
@@ -168,22 +171,33 @@ public class PlayFragment extends Fragment {
         }
         ivPokemon.setImageBitmap(loadImageFromAsset(pokemon));
         tvTag.setText(String.format("%s %s", pokemon.getTag(), pokemon.getName()));
-        new CountDownTimer(1500, 1000) {
+        new CountDownTimer(2000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-
+                currentMilis -= 1000;
+                Log.d(TAG, String.format("onTick : %s", currentMilis));
             }
 
             @Override
             public void onFinish() {
-                setupUI();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        setupUI();
+                    }
+                });
+
                 countDownTimer = new CountDownTimer(currentMilis, 1000) {
                     @Override
                     public void onTick(long millisUntilFinished) {
                         currentMilis = millisUntilFinished;
                         Log.d(TAG, String.format("current: %s", currentMilis));
-                        currentTime -= (pbTime.getMax() / 20);
-                        pbTime.setProgress(currentTime);
+                        currentTime += (pbTime.getMax() / 20);
+                        if (currentTime < pbTime.getMax()) {
+                            pbTime.setProgress(currentTime);
+                        } else {
+                            pbTime.setProgress(pbTime.getMax());
+                        }
                     }
 
                     @Override
@@ -215,6 +229,7 @@ public class PlayFragment extends Fragment {
         Log.d(TAG, String.format("src: %s", pokemon.getImage()));
         setImageBlack(pokemon);
         setAnswer(pokemon);
+        llBackground.setBackgroundColor(Color.parseColor(pokemon.getColor()));
 
     }
 
